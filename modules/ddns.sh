@@ -22,35 +22,47 @@ cat > "$SCRIPT_FILE" <<EOF
 API_TOKEN="$DDNS_APIKEY"
 ZONE_ID="$DDNS_ZONE_ID"
 DOMAIN="$DDNS_DOMAIN"
+EOF
 
-IP_ACTUAL=\$(curl -s https://ifconfig.me)
+cat >> "$SCRIPT_FILE" <<'EOF'
 
-RECORD_ID=\$(curl -s -X GET \
-  "https://api.cloudflare.com/client/v4/zones/\$ZONE_ID/dns_records?type=A&name=\$DOMAIN" \
-  -H "Authorization: Bearer \$API_TOKEN" \
-  -H "Content-Type: application/json" | jq -r '.result[0].id')
-
-if [ -z "\$RECORD_ID" ] || [ "\$RECORD_ID" == "null" ]; then
-  echo "No se encontró el registro A para \$DOMAIN"
+IP_ACTUAL=$(curl -s https://ifconfig.me)
+if [ $? -ne 0 ] || [ -z "$IP_ACTUAL" ]; then
+  echo "Error obteniendo IP actual"
   exit 1
 fi
 
-IP_DNS=\$(curl -s -X GET \
-  "https://api.cloudflare.com/client/v4/zones/\$ZONE_ID/dns_records/\$RECORD_ID" \
-  -H "Authorization: Bearer \$API_TOKEN" \
+RECORD_ID=$(curl -s -X GET \
+  "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?type=A&name=$DOMAIN" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" | jq -r '.result[0].id')
+if [ $? -ne 0 ] || [ -z "$RECORD_ID" ] || [ "$RECORD_ID" == "null" ]; then
+  echo "Error obteniendo RECORD_ID para $DOMAIN"
+  exit 1
+fi
+
+IP_DNS=$(curl -s -X GET \
+  "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" | jq -r '.result.content')
+if [ $? -ne 0 ] || [ -z "$IP_DNS" ]; then
+  echo "Error obteniendo IP_DNS para $DOMAIN"
+  exit 1
+fi
 
-if [ "\$IP_ACTUAL" != "\$IP_DNS" ]; then
-  
-  curl -s -X PUT \
-    "https://api.cloudflare.com/client/v4/zones/\$ZONE_ID/dns_records/\$RECORD_ID" \
-    -H "Authorization: Bearer \$API_TOKEN" \
+if [ "$IP_ACTUAL" != "$IP_DNS" ]; then
+  RESPONSE=$(curl -s -X PUT \
+    "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
+    -H "Authorization: Bearer $API_TOKEN" \
     -H "Content-Type: application/json" \
-    --data "{\"type\":\"A\",\"name\":\"\$DOMAIN\",\"content\":\"\$IP_ACTUAL\",\"ttl\":120,\"proxied\":false}" > /dev/null
-
-  echo "IP actualizada: \$IP_DNS → \$IP_ACTUAL"
+    --data "{\"type\":\"A\",\"name\":\"$DOMAIN\",\"content\":\"$IP_ACTUAL\",\"ttl\":120,\"proxied\":false}")
+  if [ $? -ne 0 ] || ! echo "$RESPONSE" | jq -e '.success' >/dev/null; then
+    echo "Error actualizando IP en Cloudflare"
+    exit 1
+  fi
+  echo "IP actualizada: $IP_DNS → $IP_ACTUAL"
 else
-  echo "Sin cambios. IP actual: \$IP_ACTUAL"
+  echo "Sin cambios. IP actual: $IP_ACTUAL"
 fi
 EOF
 
