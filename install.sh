@@ -33,10 +33,6 @@ if ! command -v apt-get >/dev/null; then
     error_exit "Este sistema no utiliza apt-get. Solo se soportan Debian/Ubuntu."
 fi
 
-install_package "curl"
-install_package "jq"
-install_package "cron"
-
 
 ###################################
 #  FUNCION PARA EJECUTAR MODULOS  #

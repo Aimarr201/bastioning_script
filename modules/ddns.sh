@@ -9,6 +9,7 @@ log "Configurando DDNS con Cloudflare..."
 
 install_package curl
 install_package jq
+install_package cron
 
 # Crear directorio
 mkdir -p /opt/cloudflare-ddns
