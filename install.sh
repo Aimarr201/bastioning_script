@@ -8,8 +8,8 @@
 
 # --- Validar permisos ---
 if [[ $EUID -ne 0 ]]; then
-    echo "Este script debe ejecutarse como root."
-    exit 1
+	echo "Este script debe ejecutarse como root."
+	exit 1
 fi
 
 # --- Rutas importantes ---
@@ -30,7 +30,7 @@ log "=== INICIO DE INSTALACIÓN DEL SISTEMA DE BASTIONADO ==="
 
 # --- Comprobar que el sistema es Debian/Ubuntu ---
 if ! command -v apt-get >/dev/null; then
-    error_exit "Este sistema no utiliza apt-get. Solo se soportan Debian/Ubuntu."
+	error_exit "Este sistema no utiliza apt-get. Solo se soportan Debian/Ubuntu."
 fi
 
 
@@ -38,18 +38,18 @@ fi
 #  FUNCION PARA EJECUTAR MODULOS  #
 ###################################
 run_module() {
-    local module_name="$1"
-    local module_file="$MODULES_DIR/$module_name.sh"
-    local enable_var="$2"
+	local module_name="$1"
+	local module_file="$MODULES_DIR/$module_name.sh"
+	local enable_var="$2"
 
-    if [[ "${!enable_var}" == "true" ]]; then
-        [[ ! -f "$module_file" ]] && error_exit "Falta el módulo $module_name"
+	if [[ "${!enable_var}" == "true" ]]; then
+		[[ ! -f "$module_file" ]] && error_exit "Falta el módulo $module_name"
 
-        log "--- Ejecutando módulo: $module_name ---"
-        source "$module_file"
-    else
-        log "Módulo $module_name desactivado en config.conf"
-    fi
+		log "--- Ejecutando módulo: $module_name ---"
+		source "$module_file"
+	else
+		log "Módulo $module_name desactivado en config.conf"
+	fi
 }
 
 
