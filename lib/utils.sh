@@ -10,8 +10,8 @@
 LOGFILE="/var/log/bastion.log"
 
 log() {
-    echo -e "\033[32mLOG:\033[0m [$(date '%T')] $1"
-    echo "[$(date '+%F %T')] $1" | tee -a "$LOGFILE"
+    echo -e "\033[32mLOG:\033[0m [$(date '+%T')] $1"
+    echo "[$(date '+%F %T')] $1" >> "$LOGFILE"
 }
 
 install_package() {
