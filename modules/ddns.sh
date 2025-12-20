@@ -11,7 +11,7 @@ log "Configurando DDNS con Cloudflare..."
 
 # Validaciones
 [[ -z "$DDNS_APIKEY" ]]    && error_exit "DDNS_APIKEY no está definido en config.conf"
-[[ -z "$DDNS_ZONE_ID" ]]   && error_exit "DDNS_ZONE_ID no está definido en config.conf"
+[[ -z "$DDNS_ZONE_ID" ]]    && error_exit "DDNS_ZONE_ID no está definido en config.conf"
 [[ -z "$DDNS_DOMAIN" ]]    && error_exit "DDNS_DOMAIN no está definido en config.conf"
 [[ -z "$DDNS_CRON" ]]    && error_exit "DDNS_CRON no está definido en config.conf"
 

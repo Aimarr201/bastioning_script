@@ -25,11 +25,11 @@ MODULES_DIR="$BASE_DIR/modules"
 source "$CONFIG_FILE"
 source "$UTILS_FILE"
 
-log "=== INICIO DE INSTALACIÓN DEL SISTEMA DE BASTIONADO ==="
+texto_inicio
 
 # --- Comprobar que el sistema es Debian/Ubuntu ---
 if ! command -v apt-get >/dev/null; then
-    error_exit "Este sistema no utiliza apt-get. Solo se soportan Debian/Ubuntu."
+    error_exit "Este sistema no utiliza apt-get. Solo se soporta Debian/Ubuntu."
 fi
 
 
@@ -44,10 +44,10 @@ run_module() {
     if [[ "${!enable_var}" == "true" ]]; then
         [[ ! -f "$module_file" ]] && error_exit "Falta el módulo $module_name"
 
-        log "--- Ejecutando módulo: $module_name ---"
+        log "$module_name --> Ejecutando módulo"
         source "$module_file"
     else
-        log "Módulo $module_name desactivado en config.conf"
+        log "$module_name DESACTIVADO en config.conf"
     fi
 }
 
@@ -63,5 +63,5 @@ run_module "fail2ban" ENABLE_FAIL2BAN
 run_module "unattended-upgrades" ENABLE_UNATTENDED
 
 
-log "=== INSTALACIÓN COMPLETADA CON ÉXITO ==="
+texto_fin
 exit 0
