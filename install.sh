@@ -33,9 +33,9 @@ if ! command -v apt-get >/dev/null; then
 fi
 
 
-###################################
-#  FUNCION PARA EJECUTAR MODULOS  #
-###################################
+#####################################
+#   FUNCION PARA EJECUTAR MODULOS   #
+#####################################
 run_module() {
     local module_name="$1"
     local module_file="$MODULES_DIR/$module_name.sh"
