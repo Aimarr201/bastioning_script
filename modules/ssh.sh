@@ -15,17 +15,4 @@ backup_file /etc/ssh/sshd_config
 service_start ssh
 service_enable ssh
 
-google-authentificator
-
-y
-
-$code
-
-y
-
-y
-
-y
-
-y
-
+google-authenticator --quiet --no-prompt --force --disallow-reuse --allow-reroot
