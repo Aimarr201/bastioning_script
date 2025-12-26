@@ -13,11 +13,6 @@ CONFIG_FILE="$BASE_DIR/config.conf"
 UTILS_FILE="$BASE_DIR/lib/utils.sh"
 MODULES_DIR="$BASE_DIR/modules"
 
-# --- Validar permisos ---
-if [[ "$(id -u)" -ne 0 ]]; then
-    error_exit "Este script debe ejecutarse como root."
-fi
-
 # --- Validar archivos obligatorios ---
 [[ ! -f "$CONFIG_FILE" ]] && { error_exit "Falta config.conf"; }
 [[ ! -f "$UTILS_FILE" ]]  && { error_exit "Falta lib/utils.sh"; }
@@ -25,6 +20,11 @@ fi
 # --- Cargar config y funciones ---
 source "$CONFIG_FILE"
 source "$UTILS_FILE"
+
+# --- Validar permisos ---
+if [[ "$(id -u)" -ne 0 ]]; then
+    error_exit "Este script debe ejecutarse como root."
+fi
 
 texto_inicio
 
