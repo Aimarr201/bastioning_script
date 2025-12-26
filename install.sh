@@ -6,16 +6,17 @@
 #           Autor: Aimar Mendibil Ayo           #
 #################################################
 
-# --- Validar permisos ---
-if [[ $EUID -ne 0 ]]; then
-    error_exit "Este script debe ejecutarse como root."
-fi
 
 # --- Rutas importantes ---
 BASE_DIR="$(dirname "$0")"
 CONFIG_FILE="$BASE_DIR/config.conf"
 UTILS_FILE="$BASE_DIR/lib/utils.sh"
 MODULES_DIR="$BASE_DIR/modules"
+
+# --- Validar permisos ---
+if [[ "$(id -u)" -ne 0 ]]; then
+    error_exit "Este script debe ejecutarse como root."
+fi
 
 # --- Validar archivos obligatorios ---
 [[ ! -f "$CONFIG_FILE" ]] && { error_exit "Falta config.conf"; }
