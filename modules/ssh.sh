@@ -111,7 +111,7 @@ Subsystem sftp internal-sftp -f AUTHPRIV -l INFO
 AcceptEnv LANG LC_* COLORTERM NO_COLOR
 EOF
 
-cat > /etc/ssh/sshd_config <<EOF
+cat > /etc/pam.d/sshd_config <<EOF
 # Configuración PAM para el servicio Secure Shell
 
 # Autenticación de dos factores con Google Authenticator
