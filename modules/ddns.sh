@@ -83,4 +83,4 @@ chmod +x "$SCRIPT_FILE"
 # Añadir al cron (sin duplicar)
 add_cronjob "$DDNS_CRON /bin/bash $SCRIPT_FILE"
 
-log "DDNS con Cloudflare configurado correctamente."
+log "DDNS con Cloudflare configurado correctamente"

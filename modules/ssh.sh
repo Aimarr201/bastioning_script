@@ -6,21 +6,35 @@
 #           Autor: Aimar Mendibil Ayo           #
 #################################################
 
+
+log "Configurando SSH..."
+
+# validaciones
+[[ -z "$SSH_USERNAME" ]] && error_exit "SSH_USERNAME no está definido en config.conf"
+[[ -z "$SSH_PORT" ]] && error_exit "SSH_PORT no está definido en config.conf"
+[[ -z "$SSH_PUBLICKEY" ]] && error_exit "SSH_PUBLICKEY no está definido en config.conf"
+
+# instalar paquetes
 install_package ssh
 install_package libpam-google-authenticator
 
-backup_file /etc/pam.d/sshd
-backup_file /etc/ssh/sshd_config
-
+# iniciar y habilitar servicios
 service_start ssh
 service_enable ssh
 
+# backups de los archivos de configuracion
+backup_file /etc/pam.d/sshd
+backup_file /etc/ssh/sshd_config
+
+# configuracion de google-authenticator
 sudo -u $SSH_USERNAME google-authenticator -t -C -f -q -e 5 -Q NONE -d -w 3 -r 3 -R 30
 
+# añadir la clave publica
 cat >> /home/$SSH_USERNAME/.ssh/authorized_keys <<EOF
 $SSH_PUBLICKEY
 EOF
 
+# configurar el servicio de ssh
 cat > /etc/ssh/sshd_config <<EOF
 # Incluir configuraciones adicionales desde archivos en /etc/ssh/sshd_config.d/
 Include /etc/ssh/sshd_config.d/*.conf
@@ -112,6 +126,7 @@ Subsystem sftp internal-sftp -f AUTHPRIV -l INFO
 AcceptEnv LANG LC_* COLORTERM NO_COLOR
 EOF
 
+# configurar el PAM
 cat > /etc/pam.d/sshd <<EOF
 # Configuración PAM para el servicio Secure Shell
 
@@ -173,4 +188,11 @@ session [success=ok ignore=ignore module_unknown=ignore default=bad]        pam_
 @include common-password
 EOF
 
+# añadir el codigo de contraseña de un solo uso y los codigos de recuperacion a un archivo
+echo "Código de contraseña de un solo uso: $(head -n 1 /home/$SSH_USERNAME/.google_authenticator)" > /home/$SSH_USERNAME/mfa 
+echo "Scratch codes: $(tail -n 6 /home/$SSH_USERNAME/.google_authenticator)" >> /home/$SSH_USERNAME/mfa
+
+# reiniciar el servicio ssh para aplicar los cambios
 service_restart ssh
+
+log "Servicio ssh configurado correctamente"
