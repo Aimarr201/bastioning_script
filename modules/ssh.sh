@@ -124,7 +124,7 @@ auth required pam_google_authenticator.so
 account    required     pam_nologin.so
 
 # Descomentar y editar /etc/security/access.conf si necesitas establecer límites complejos
-# de acceso que sean difíciles de expresar en sshd_config.
+# de acceso que son difíciles de expresar en sshd_config.
 # account  required     pam_access.so
 
 # Autorización estándar de Un*x.
