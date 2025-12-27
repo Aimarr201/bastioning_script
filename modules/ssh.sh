@@ -22,6 +22,7 @@ $SSH_PUBLICKEY
 EOF
 
 cat > /etc/ssh/sshd_config <<EOF
+# Incluir configuraciones adicionales desde archivos en /etc/ssh/sshd_config.d/
 Include /etc/ssh/sshd_config.d/*.conf
 
 # Puerto SSH recomenadado cambiarlo (por defecto 22) para evitar escaneos automaticos
@@ -111,7 +112,7 @@ Subsystem sftp internal-sftp -f AUTHPRIV -l INFO
 AcceptEnv LANG LC_* COLORTERM NO_COLOR
 EOF
 
-cat > /etc/pam.d/sshd_config <<EOF
+cat > /etc/pam.d/sshd <<EOF
 # Configuración PAM para el servicio Secure Shell
 
 # Autenticación de dos factores con Google Authenticator
