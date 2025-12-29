@@ -60,8 +60,6 @@ run_module() {
 run_module "ssh" ENABLE_SSH
 run_module "ddns" ENABLE_DDNS
 run_module "ufw" ENABLE_UFW
-run_module "psad" ENABLE_PSAD
-run_module "iptables" ENABLE_IPTABLES
 run_module "fail2ban" ENABLE_FAIL2BAN
 run_module "unattended-upgrades" ENABLE_UNATTENDED
 
