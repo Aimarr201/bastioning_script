@@ -33,6 +33,8 @@ if ! command -v apt-get >/dev/null; then
     error_exit "Este sistema no utiliza apt-get. Solo se soporta Debian/Ubuntu."
 fi
 
+# --- actualizar lista de paquetes ---
+apt update
 
 #####################################
 #   FUNCION PARA EJECUTAR MODULOS   #
