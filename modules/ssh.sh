@@ -33,6 +33,8 @@ sudo -u $SSH_USERNAME google-authenticator -t -C -f -q -e 5 -Q NONE -d -w 3 -r 3
 cat >> /home/$SSH_USERNAME/.ssh/authorized_keys <<EOF
 $SSH_PUBLICKEY
 EOF
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys 
 
 # configurar el servicio de ssh
 cat > /etc/ssh/sshd_config <<EOF
