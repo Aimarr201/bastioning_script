@@ -58,18 +58,15 @@ fail_ipdb() {
         [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
         echo -e "action = %(action_)s, %(action_abuseipdb)s\n" >> "/etc/fail2ban/jail.local"
 
-        cat > /etc/fail2ban/action.d/abuseipdb.conf <<'EOF'
+        cat > /etc/fail2ban/action.d/abuseipdb.conf <<EOF
 [Definition]
 
 actionban = 
     # Enviar la IP a AbuseIPDB para reportarla
     curl -s -X POST https://api.abuseipdb.com/api/v2/report \
-EOF
-        cat >> /etc/fail2ban/action.d/abuseipdb.conf <<EOF
     --header "Key: $F2B_APIKEY" \
     --header "Accept: application/json" \
     --data "ipAddress=<ip>&comment=Fail2Ban%20Report"
-
 EOF
         log "configuraciones para enviar reportes añadida"
 
@@ -77,21 +74,19 @@ EOF
         install_package jq
         [ "$(head -n 1 "/etc/fail2ban/action.d/abuseipdb.conf")" != "[Definition]" ] && echo -e "[Definition]\n" > "/etc/fail2ban/action.d/abuseipdb.conf"
 
-        cat >> /etc/fail2ban/action.d/abuseipdb.conf <<'EOF'
-# Consultar la IP para ver si ya está registrada como maliciosa
-ip_info=$(curl -s -X GET "https://api.abuseipdb.com/api/v2/check?ipAddress=<ip>&maxAgeInDays=90" \
-EOF
         cat >> /etc/fail2ban/action.d/abuseipdb.conf <<EOF
---header "Key: $F2B_APIKEY" \
---header "Accept: application/json")
+# Consultar la IP para ver si ya está registrada como maliciosa
+ip_info=\$(curl -s -X GET "https://api.abuseipdb.com/api/v2/check?ipAddress=<ip>&maxAgeInDays=90" \
+    --header "Key: $F2B_APIKEY" \
+    --header "Accept: application/json")
 EOF
-        cat >> /etc/fail2ban/action.d/abuseipdb.conf <<'EOF'
 
+        cat >> /etc/fail2ban/action.d/abuseipdb.conf <<EOF
 # Extraer el puntaje de abuso de la respuesta de la API
-abuse_score=$(echo "$ip_info" | jq '.data.abuseConfidenceScore')
+abuse_score=\$(echo "\$ip_info" | jq '.data.abuseConfidenceScore')
 
 # Si el puntaje de abuso es alto (80 o más), baneamos la IP durante 30 días
-if [ "$abuse_score" -ge 80 ]; then
+if [ "\$abuse_score" -ge 80 ]; then
     # Baneamos la IP durante 30 días
     fail2ban-client set <jail_name> banip <ip> 30d
 else
