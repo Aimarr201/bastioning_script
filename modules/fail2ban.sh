@@ -116,7 +116,6 @@ EOF
     log "jaula de reincidentes añadida"
 }
 
-
 fail_logrotate() {
     install_package wget
     install_package rsyslog
@@ -146,16 +145,9 @@ service_restart fail2ban
 
 
 
-[sshd]
-enabled = true
-action = %(action_)s, %(action_abuseipdb)s[abuseipdb_category="18,22"]
+#[sshd]
+#enabled = true
+#action = %(action_)s, %(action_abuseipdb)s[abuseipdb_category="18,22"]
 
 
 
-years?, yea?, yy?
-months?, mon?
-weeks?, wee?, ww?
-days?, da, dd?
-hours?, hou?, hh?
-minutes?, min?, mm?
-seconds?, sec?, ss?
