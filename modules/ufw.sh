@@ -41,6 +41,5 @@ install_package ufw
 [[ "$UFW_DHCP" == "true" ]] && sudo ufw allow out 67 comment "allow the DHCP client to update" && sudo ufw allow out 68 comment "allow the DHCP client to update"  && log "regala de salida DHCP añadida"
 
 # habilitar ufw
-echo  "y" | sudo ufw enable
-log "ufw habilitado"
+echo  "y" | sudo ufw enable && log "ufw habilitado"
 log "ufw configurado correctamente"
