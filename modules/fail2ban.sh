@@ -79,9 +79,7 @@ EOF
 ip_info=\$(curl -s -X GET "https://api.abuseipdb.com/api/v2/check?ipAddress=<ip>&maxAgeInDays=90" \
     --header "Key: $F2B_APIKEY" \
     --header "Accept: application/json")
-EOF
 
-        cat >> /etc/fail2ban/action.d/abuseipdb.conf <<EOF
 # Extraer el puntaje de abuso de la respuesta de la API
 abuse_score=\$(echo "\$ip_info" | jq '.data.abuseConfidenceScore')
 
