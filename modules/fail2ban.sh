@@ -69,6 +69,7 @@ actionban =
     --data "ipAddress=<ip>&comment=Fail2Ban%20Report"
 EOF
         log "configuraciones para enviar reportes añadida"
+    fi
 
     if [ "$F2B_ABUSEIPDB" == "true" ]; then 
         install_package jq
@@ -138,9 +139,10 @@ service_restart fail2ban
 
 
 
-
+#[[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
 #[sshd]
 #enabled = true
+#port = $SSH_PORT
 #action = %(action_)s, %(action_abuseipdb)s[abuseipdb_category="18,22"]
 
 
