@@ -56,13 +56,13 @@ EOF
 }
 
 fail_ipdb() {
+    mkdir /var/log/fail2ban
     touch /var/log/fail2ban/abuseipdb.log
-    cp ../resources/abuseipdb-check-report.sh /usr/local/sbin/abuseipdb-check-report.sh
+    cp resources/abuseipdb-check-report.sh /usr/local/sbin/abuseipdb-check-report.sh
     chmod 755 /var/log/fail2ban/abuseipdb.log
     chmod 755 /usr/local/sbin/abuseipdb-check-report.sh
 
     install_package curl
-    install_package awk
 
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -76,6 +76,7 @@ EOF
     replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "norestored " " 0"
     replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "actionban " " /usr/local/sbin/abuseipdb-check-report.sh <ip> <jail>"
     replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "abuseipdb_apikey " " $F2B_APIKEY"
+    log "Reportes con AbuseIPDB añadido"
 }
 
 fail_recidive() {
@@ -124,7 +125,6 @@ service_restart fail2ban
 #[sshd]
 #enabled = true
 #port = $SSH_PORT
-#action = %(action_)s, %(action_abuseipdb)s[abuseipdb_category="18,22"]
 
 
 
