@@ -53,7 +53,6 @@ EOF
 fail_ipdb() {
     if [ "$F2B_SENDREPORTS" == "true" ]; then 
         install_package curl
-        replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "abuseipdb_apikey" "$F2B_APIKEY"
 
         [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
         echo -e "action = %(action_)s, %(action_abuseipdb)s\n" >> "/etc/fail2ban/jail.local"
