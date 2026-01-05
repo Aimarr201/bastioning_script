@@ -34,7 +34,7 @@ replace_or_add() {
     local value="$3"
 
     grep -q "^$key" "$file" && \
-        sed -i "s|^$key.*|$key $value|" "$file" || \
+        sed -i "s|^$key.*|$key = $value|" "$file" || \
         echo "$key = $value" >> "$file"
 
     log "Config: $key $value -> $file"
