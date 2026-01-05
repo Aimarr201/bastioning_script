@@ -92,6 +92,7 @@ else
     iptables -I f2b_<jail_name> -s <ip> -j REJECT
 fi
 EOF
+    fi
 }
 
 fail_recidive() {
