@@ -22,6 +22,16 @@ log "Configurando unattended-upgrades"
 [[ -z "$UNATT_REBOOT" ]] && error_exit "UNATT_REBOOT no está definido en config.conf"
 [[ -z "$UNATT_REBOOTWITHUSERS" ]] && error_exit "UNATT_REBOOTWITHUSERS no está definido en config.conf"
 
+# cambiar repositorios http por https
+SOURCES_LIST="/etc/apt/sources.list"
+SOURCES_DIR="/etc/apt/sources.list.d/"
+
+sudo sed -i 's|http://|https://|g' "$SOURCES_LIST"
+
+for file in "$SOURCES_DIR"*.list; do
+    sudo sed -i 's|http://|https://|g' "$file"
+done
+
 # instalar paquetes
 install_package "unattended-upgrades"
 install_package "apt-listchanges"
