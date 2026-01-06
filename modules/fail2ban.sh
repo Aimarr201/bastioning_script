@@ -70,8 +70,7 @@ fail_ipdb() {
 
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
     cat >> /etc/fail2ban/jail.local <<EOF
-action = %(action_)s
-         %(action_abuseipdb)s
+action = %(action_abuseipdb)s
 
 EOF
 
@@ -85,7 +84,7 @@ EOF
 }
 
 fail_recidive() {
-    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "\n" >> "/etc/fail2ban/jail.local"
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
 [recidive]
@@ -100,9 +99,10 @@ EOF
 }
 
 fail_sshd() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
     [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
     cat >> /etc/fail2ban/jail.local <<EOF
-
 [sshd]
 
 enabled = true
@@ -113,8 +113,9 @@ EOF
 }
 
 fail_nginx() {
-    cat >> /etc/fail2ban/jail.local <<EOF
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
+    cat >> /etc/fail2ban/jail.local <<EOF
 [nginx-http-auth]
 enabled  = true
 port     = http,https
@@ -140,6 +141,7 @@ EOF
 }
 
 fail_apache() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
 
@@ -159,6 +161,8 @@ EOF
 }
 
 fail_wordpress() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
     cat >> /etc/fail2ban/jail.local <<EOF
 
 [wordpress-hard]
@@ -183,6 +187,8 @@ EOF
 }
 
 fail_ftp() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
     cat >> /etc/fail2ban/jail.local <<EOF
 
 [vsftpd]
@@ -198,6 +204,8 @@ EOF
 }
 
 fail_postfix() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
     cat >> /etc/fail2ban/jail.local <<EOF
 
 [postfix]
@@ -223,6 +231,8 @@ EOF
 }
 
 fail_devecot() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
     cat >> /etc/fail2ban/jail.local <<EOF
 
 [dovecot]
@@ -238,12 +248,13 @@ EOF
 }
 
 fail_custom() {
+    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
     [[ -z "$F2B_CUSTOM_MAX" ]] && F2B_CUSTOM_MAX="$F2B_DEFMAXRETRY"
     [[ -z "$F2B_CUSTOM_FIND" ]] && F2B_CUSTOM_FIND="$F2B_DEFFINDTIME"
     [[ -z "$F2B_CUSTOM_BAN" ]] && F2B_CUSTOM_BAN="$F2B_DEFBANTIME"
 
     cat >> /etc/fail2ban/jail.local <<EOF
-
 [$F2B_CUSTOM_NAME]
 enabled  = true
 port     = $F2B_CUSTOM_PORT
