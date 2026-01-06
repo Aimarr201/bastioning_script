@@ -63,6 +63,7 @@ fail_ipdb() {
     mkdir /var/log/fail2ban
     touch /var/log/fail2ban/abuseipdb.log
     cp resources/abuseipdb-check-report.sh /usr/local/sbin/abuseipdb-check-report.sh
+    chmod +x /usr/local/sbin/abuseipdb-check-report.sh
     chmod 755 /var/log/fail2ban/abuseipdb.log
     chmod 755 /usr/local/sbin/abuseipdb-check-report.sh
 
@@ -99,14 +100,26 @@ EOF
 }
 
 fail_sshd() {
+    cat >   /etc/fail2ban/filter.d/sshd-publickey.conf <<EOF
+# Filtro para detectar rechazos de publickey SSH
+[Definition]
+
+failregex = ^.*sshd.*Connection (?:reset|closed) by authenticating user .* <HOST> port \d+.*$
+            ^.*sshd.*Disconnected from authenticating user .* <HOST>.*$
+            ^.*sshd.*Connection reset by <HOST> \[preauth\]$
+
+ignoreregex =
+EOF
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
     cat >> /etc/fail2ban/jail.local <<EOF
-[sshd]
+[sshd-publickey]
 
-enabled = true
-port = $SSH_PORT
+enabled  = true
+port     = 60696
+logpath  = /var/log/auth.log
+filter   = sshd-publickey
 
 EOF
     log "jaula para sshd añadida"
