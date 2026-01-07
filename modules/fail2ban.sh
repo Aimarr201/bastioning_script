@@ -82,9 +82,9 @@ port     = all
 logpath  = /dev/null
 filter   = sshd-publickey
 
-bantime  = 30d
 maxretry = 1
 findtime = 1s
+bantime  = 30d
 
 action = %(action_)s
 EOF
@@ -111,7 +111,8 @@ EOF
 }
 
 fail_sshd() {
-    cat >   /etc/fail2ban/filter.d/sshd-publickey.conf <<EOF
+    if [ "$ENABLE_SSH" == "true" ]; then
+        cat >   /etc/fail2ban/filter.d/sshd-publickey.conf <<EOF
 # Filtro para detectar rechazos de publickey SSH
 [Definition]
 
@@ -121,18 +122,30 @@ failregex = ^.*sshd.*Connection (?:reset|closed) by authenticating user .* <HOST
 
 ignoreregex =
 EOF
-    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+        [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
-    [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
-    cat >> /etc/fail2ban/jail.local <<EOF
+        [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
+        cat >> /etc/fail2ban/jail.local <<EOF
 [sshd-publickey]
 
 enabled  = true
-port     = 60696
+port     = $SSH_PORT
 logpath  = /var/log/auth.log
 filter   = sshd-publickey
 
 EOF
+    else
+        [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
+
+        [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
+        cat >> /etc/fail2ban/jail.local <<EOF
+[sshd]
+
+enabled  = true
+port     = $SSH_PORT
+
+EOF
+    fi
     log "jaula para sshd añadida"
 }
 
@@ -175,39 +188,9 @@ port     = http,https
 logpath  = /var/log/apache2/error.log
 
 
-[apache-limit-req]
-enabled  = true
-port     = http,https
-logpath  = /var/log/apache2/access.log
 
 EOF
     log "jaula para apache añadida"
-}
-
-fail_wordpress() {
-    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
-
-    cat >> /etc/fail2ban/jail.local <<EOF
-
-[wordpress-hard]
-enabled  = true
-port     = http,https
-logpath  = /var/log/wordpress/auth.log
-maxretry = 3
-findtime = 10m
-bantime  = 24h
-
-
-[wordpress-xmlrpc]
-enabled  = true
-port     = http,https
-logpath  = /var/log/nginx/access.log
-maxretry = 5
-findtime = 10m
-bantime  = 24h
-
-EOF
-    log "jaula para wordpress añadida"
 }
 
 fail_ftp() {
@@ -271,26 +254,6 @@ EOF
     log "jaula para devecot añadida"
 }
 
-fail_custom() {
-    [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
-
-    [[ -z "$F2B_CUSTOM_MAX" ]] && F2B_CUSTOM_MAX="$F2B_DEFMAXRETRY"
-    [[ -z "$F2B_CUSTOM_FIND" ]] && F2B_CUSTOM_FIND="$F2B_DEFFINDTIME"
-    [[ -z "$F2B_CUSTOM_BAN" ]] && F2B_CUSTOM_BAN="$F2B_DEFBANTIME"
-
-    cat >> /etc/fail2ban/jail.local <<EOF
-[$F2B_CUSTOM_NAME]
-enabled  = true
-port     = $F2B_CUSTOM_PORT
-logpath  = $F2B_CUSTOM_LOG
-maxretry = $F2B_CUSTOM_MAX
-findtime = $F2B_CUSTOM_FIND
-bantime  = $F2B_CUSTOM_BAN
-
-EOF
-    log "jaula para $F2B_CUSTOM_NAME añadida"
-}
-
 fail_logrotate() {
     install_package wget
 
@@ -299,7 +262,6 @@ fail_logrotate() {
 
     wget -O /etc/logrotate.d/fail2ban https://raw.githubusercontent.com/fail2ban/fail2ban/debian/debian/fail2ban.logrotate
 
-    service_restart rsyslog
     log "rotacion de logs añadida"
 }
 
@@ -312,15 +274,14 @@ fail_logrotate() {
 [[ "$F2B_SSHD" == "true" ]] && fail_sshd
 [[ "$F2B_NGINX" == "true" ]] && fail_nginx
 [[ "$F2B_APACHE" == "true" ]] && fail_apache
-[[ "$F2B_WORDPRESS" == "true" ]] && fail_wordpress
 [[ "$F2B_FTP" == "true" ]] && fail_ftp
 [[ "$F2B_POSTFIX" == "true" ]] && fail_postfix
 [[ "$F2B_DOVECOT" == "true" ]] && fail_devecot
-[[ "$F2B_CUSTOM" == "true" ]] && fail_custom
 [[ "$F2B_LOGROTATE" == "true" ]] && fail_logrotate
 
 
 # reiniciar servicio fail2ban
+[[ "$F2B_LOGROTATE" == "true" ]] && service_restart rsyslog
 service_restart fail2ban
 
 
