@@ -60,26 +60,37 @@ EOF
 
 fail_ipdb() {
     [[ -z "$F2B_NORESTORE" ]] && F2B_NORESTORE="0"
-    mkdir /var/log/fail2ban
+    mkdir -p /var/log/fail2ban
     touch /var/log/fail2ban/abuseipdb.log
-    cp resources/abuseipdb-check-report.sh /usr/local/sbin/abuseipdb-check-report.sh
-    chmod +x /usr/local/sbin/abuseipdb-check-report.sh
+    touch /etc/fail2ban/abuseipdb.env && echo "ABUSEIPDB_API_KEY=\"$F2B_APIKEY\"" > "/etc/fail2ban/abuseipdb.env"
+    cp -r resources/abuseipdb-check-report.sh /usr/local/sbin/abuseipdb-check-report.sh
     chmod 755 /var/log/fail2ban/abuseipdb.log
     chmod 755 /usr/local/sbin/abuseipdb-check-report.sh
 
     install_package curl
 
+
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
     cat >> /etc/fail2ban/jail.local <<EOF
-action = %(action_abuseipdb)s
+action = %(action_)s
+         abuseipdb
 
+
+[highrisk]
+enabled  = true
+port     = all
+logpath  = /dev/null
+filter   = sshd-publickey
+
+bantime  = 30d
+maxretry = 1
+findtime = 1s
+
+action = %(action_)s
 EOF
 
-    replace_or_add "/usr/local/sbin/abuseipdb-check-report.sh" "API_KEY" "\"$F2B_APIKEY\""
-
+    replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "actionban " " /usr/local/sbin/abuseipdb-check-report.sh <ip> <name>"
     replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "norestored " " $F2B_NORESTORE"
-    replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "actionban " " /usr/local/sbin/abuseipdb-check-report.sh <ip> <jail>"
-    replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "abuseipdb_apikey " " $F2B_APIKEY"
 
     log "Reportes con AbuseIPDB añadido"
 }
