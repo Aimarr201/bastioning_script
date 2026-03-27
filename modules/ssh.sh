@@ -14,6 +14,13 @@ log "Configurando SSH..."
 [[ -z "$SSH_PORT" ]] && error_exit "SSH_PORT no está definido en config.conf"
 [[ -z "$SSH_PUBLICKEY" ]] && error_exit "SSH_PUBLICKEY no está definido en config.conf"
 
+# comprobar que existe el usuario
+id "$SSH_USERNAME" >/dev/null 2>&1 || error_exit "El usuario $SSH_USERNAME no existe"
+
+# obtener el nombre de usuario
+SSH_HOME="$(getent passwd "$SSH_USERNAME" | cut -d: -f6)"
+[[ -z "$SSH_HOME" ]] && error_exit "No se ha podido obtener el home del usuario $SSH_USERNAME"
+
 # instalar paquetes
 install_package ssh
 install_package libpam-google-authenticator
@@ -26,15 +33,17 @@ service_enable ssh
 backup_file /etc/pam.d/sshd
 backup_file /etc/ssh/sshd_config
 
-# configuracion de google-authenticator
-sudo -u $SSH_USERNAME google-authenticator -t -C -f -q -e 5 -Q NONE -d -w 3 -r 3 -R 30
+# lanzar configuracion de google-authenticator como usuario
+runuser -u "$SSH_USERNAME" -- google-authenticator -t -C -f -q -e 5 -Q NONE -d -w 3 -r 3 -R 30
 
-# añadir la clave publica
-cat >> /home/$SSH_USERNAME/.ssh/authorized_keys <<EOF
-$SSH_PUBLICKEY
-EOF
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys 
+# añadir la clave publica en la ruta del usuario
+install -d -m 700 -o "$SSH_USERNAME" -g "$SSH_USERNAME" "$SSH_HOME/.ssh"
+touch "$SSH_HOME/.ssh/authorized_keys"
+if ! grep -Fxq "$SSH_PUBLICKEY" "$SSH_HOME/.ssh/authorized_keys"; then
+	echo "$SSH_PUBLICKEY" >> "$SSH_HOME/.ssh/authorized_keys"
+fi
+chown "$SSH_USERNAME:$SSH_USERNAME" "$SSH_HOME/.ssh/authorized_keys"
+chmod 600 "$SSH_HOME/.ssh/authorized_keys"
 
 # configurar el servicio de ssh
 cat > /etc/ssh/sshd_config <<EOF
@@ -191,8 +200,9 @@ session [success=ok ignore=ignore module_unknown=ignore default=bad]        pam_
 EOF
 
 # añadir el codigo de contraseña de un solo uso y los codigos de recuperacion a un archivo
-echo "Código de contraseña de un solo uso: $(head -n 1 /home/$SSH_USERNAME/.google_authenticator)" > /home/$SSH_USERNAME/mfa 
-echo "Scratch codes: $(tail -n 6 /home/$SSH_USERNAME/.google_authenticator)" >> /home/$SSH_USERNAME/mfa
+echo "Código de contraseña de un solo uso: $(head -n 1 "$SSH_HOME/.google_authenticator")" > "$SSH_HOME/mfa"
+echo "Scratch codes: $(tail -n 6 "$SSH_HOME/.google_authenticator")" >> "$SSH_HOME/mfa"
+chown "$SSH_USERNAME:$SSH_USERNAME" "$SSH_HOME/mfa"
 
 # reiniciar el servicio ssh para aplicar los cambios
 service_restart ssh
