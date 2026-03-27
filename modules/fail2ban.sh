@@ -77,6 +77,7 @@ action = %(action_)s
 
 
 [highrisk]
+
 enabled  = true
 port     = all
 logpath  = /dev/null
@@ -87,6 +88,7 @@ findtime = 1s
 bantime  = 30d
 
 action = %(action_)s
+
 EOF
 
     replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "actionban " " /usr/local/sbin/abuseipdb-check-report.sh <ip> <name>"
