@@ -8,7 +8,12 @@
 
 
 # validaciones
-[[ "$F2B_ABUSEIPDB" == "true" && -z "$F2B_APIKEY" ]] && error_exit "F2B_APIKEY no está definido en config.conf"
+SECRETS_FILE="/etc/bastioning/secrets.env"
+[[ -f "$SECRETS_FILE" ]] && source "$SECRETS_FILE"
+
+F2B_APIKEY="${F2B_SCRIPT_APIKEY:-${F2B_APIKEY:-}}"
+
+[[ "$F2B_ABUSEIPDB" == "true" && -z "$F2B_APIKEY" ]] && error_exit "F2B_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
 
 # instalar paquetes
 install_package fail2ban
@@ -59,11 +64,27 @@ EOF
 }
 
 fail_ipdb() {
+    local abuse_script_src=""
+
     [[ -z "$F2B_NORESTORE" ]] && F2B_NORESTORE="0"
     mkdir -p /var/log/fail2ban
     touch /var/log/fail2ban/abuseipdb.log
-    touch /etc/fail2ban/abuseipdb.env && echo "ABUSEIPDB_API_KEY=\"$F2B_APIKEY\"" > "/etc/fail2ban/abuseipdb.env"
-    cp -r resources/abuseipdb-check-report.sh /usr/local/sbin/abuseipdb-check-report.sh
+    cat > /etc/fail2ban/abuseipdb.env <<'EOF'
+SECRETS_FILE="/etc/bastioning/secrets.env"
+[[ -f "$SECRETS_FILE" ]] && source "$SECRETS_FILE"
+    ABUSEIPDB_API_KEY="${F2B_SCRIPT_APIKEY:-}"
+EOF
+
+    if [[ -n "$BASE_DIR" && -f "$BASE_DIR/resources/abuseipdb-check-report.sh" ]]; then
+        abuse_script_src="$BASE_DIR/resources/abuseipdb-check-report.sh"
+    elif [[ -f "resources/abuseipdb-check-report.sh" ]]; then
+        abuse_script_src="resources/abuseipdb-check-report.sh"
+    else
+        error_exit "No se encuentra resources/abuseipdb-check-report.sh"
+    fi
+
+    cp -r "$abuse_script_src" /usr/local/sbin/abuseipdb-check-report.sh
+    chmod 600 /etc/fail2ban/abuseipdb.env
     chmod 755 /var/log/fail2ban/abuseipdb.log
     chmod 755 /usr/local/sbin/abuseipdb-check-report.sh
 
@@ -285,5 +306,3 @@ fail_logrotate() {
 # reiniciar servicio fail2ban
 [[ "$F2B_LOGROTATE" == "true" ]] && service_restart rsyslog
 service_restart fail2ban
-
-

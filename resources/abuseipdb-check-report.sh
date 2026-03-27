@@ -9,6 +9,11 @@ log() {
   echo "[$(date '+%F %T')] $*" >> "/var/log/fail2ban/abuseipdb.log"
 }
 
+if [[ -z "$ABUSEIPDB_API_KEY" ]]; then
+  log "ERROR ABUSEIPDB_API_KEY no está definida en el entorno"
+  exit 1
+fi
+
 log "Consultando AbuseIPDB para $IP"
 
 RESPONSE=$(curl -s --max-time 10 -X POST "https://api.abuseipdb.com/api/v2/report" \
@@ -20,7 +25,7 @@ RESPONSE=$(curl -s --max-time 10 -X POST "https://api.abuseipdb.com/api/v2/repor
 
 if !  echo "$RESPONSE" | grep -q '"abuseConfidenceScore"'; then
     log "ERROR al reportar a AbuseIPDB"
-    log "Respuesta: $REPORT_RESPONSE"
+    log "Respuesta: $RESPONSE"
     exit 1
 fi
 

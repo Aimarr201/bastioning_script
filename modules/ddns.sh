@@ -15,7 +15,7 @@ SECRETS_FILE="/etc/bastioning/secrets.env"
 DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-${DDNS_APIKEY:-}}"
 
 # Validaciones
-[[ -z "$DDNS_APIKEY" ]] && error_exit "DDNS_APIKEY no está definido en config.conf"
+[[ -z "$DDNS_APIKEY" ]] && error_exit "DDNS_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
 [[ -z "$DDNS_ZONE_ID" ]] && error_exit "DDNS_ZONE_ID no está definido en config.conf"
 [[ -z "$DDNS_DOMAIN" ]] && error_exit "DDNS_DOMAIN no está definido en config.conf"
 [[ -z "$DDNS_CRON" ]] && error_exit "DDNS_CRON no está definido en config.conf"
