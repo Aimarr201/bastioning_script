@@ -12,7 +12,7 @@ log "Configurando DDNS con Cloudflare..."
 SECRETS_FILE="/etc/bastioning/secrets.env"
 [[ -f "$SECRETS_FILE" ]] && source "$SECRETS_FILE"
 
-DDNS_APIKEY="${BASTION_DDNS_APIKEY:-${DDNS_APIKEY:-}}"
+DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-${DDNS_APIKEY:-}}"
 
 # Validaciones
 [[ -z "$DDNS_APIKEY" ]] && error_exit "DDNS_APIKEY no está definido en config.conf"
@@ -38,12 +38,12 @@ cat > "$SCRIPT_FILE" <<EOF
 SECRETS_FILE="/etc/bastioning/secrets.env"
 [[ -f "\$SECRETS_FILE" ]] && source "\$SECRETS_FILE"
 
-API_TOKEN="\${BASTION_DDNS_APIKEY:-}"
+API_TOKEN="\${DDNS_SCRIPT_APIKEY:-}"
 ZONE_ID="$DDNS_ZONE_ID"
 DOMAIN="$DDNS_DOMAIN"
 
 if [ -z "\$API_TOKEN" ]; then
-    echo "BASTION_DDNS_APIKEY no está definida en el entorno"
+    echo "DDNS_SCRIPT_APIKEY no está definida en el entorno"
     exit 1
 fi
 EOF
