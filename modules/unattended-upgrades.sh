@@ -22,15 +22,19 @@ log "Configurando unattended-upgrades"
 [[ -z "$UNATT_REBOOT" ]] && error_exit "UNATT_REBOOT no está definido en config.conf"
 [[ -z "$UNATT_REBOOTWITHUSERS" ]] && error_exit "UNATT_REBOOTWITHUSERS no está definido en config.conf"
 
-# cambiar repositorios http por https
+# definir rutas
 SOURCES_LIST="/etc/apt/sources.list"
 SOURCES_DIR="/etc/apt/sources.list.d/"
 
-sudo sed -i 's|http://|https://|g' "$SOURCES_LIST"
+# comprobar si hay que cambiar repositorios http por https
+if [[ "$UNATT_SOURCES" == "true" ]]; then
+    [[ -f "$SOURCES_LIST" ]] && sed -i 's|http://|https://|g' "$SOURCES_LIST"
 
-for file in "$SOURCES_DIR"*.list; do
-    sudo sed -i 's|http://|https://|g' "$file"
-done
+    for file in "$SOURCES_DIR"*.list; do
+        [[ -f "$file" ]] || continue
+        sed -i 's|http://|https://|g' "$file"
+    done
+fi
 
 # instalar paquetes
 install_package "unattended-upgrades"
@@ -102,10 +106,15 @@ EOF
 
 # comprobación de configuración correcta
 
-unattended-upgrade -d --dry-run
-
-if ! tail -n 1 "/var/log/unattended-upgrades/unattended-upgrades.log" | grep -q "DEBUG upgrade result: True"; then
-    error_exit "Error en la comprobación de unattended-upgrades"
+if ! unattended-upgrade -d --dry-run; then
+    LOG_FILE="/var/log/unattended-upgrades/unattended-upgrades.log"
+    if [[ -f "$LOG_FILE" ]]; then
+        log "Últimas líneas del log de unattended-upgrades tras error:"
+        while IFS= read -r line; do
+            log "$line"
+        done < <(tail -n 40 "$LOG_FILE")
+    fi
+    error_exit "Error en la comprobación de unattended-upgrades (dry-run)"
 fi
 
 log "unattended-upgrades configurado correctamente"
