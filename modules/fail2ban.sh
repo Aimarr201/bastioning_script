@@ -8,10 +8,17 @@
 
 
 # validaciones
-SECRETS_FILE="/etc/bastioning/secrets.env"
-[[ -f "$SECRETS_FILE" ]] && source "$SECRETS_FILE"
+APIKEY_FILE="/etc/fail2ban/apikey.env"
+[[ -f "$APIKEY_FILE" ]] && source "$APIKEY_FILE"
 
 F2B_APIKEY="${F2B_SCRIPT_APIKEY:-${F2B_APIKEY:-}}"
+
+if [[ -n "$F2B_APIKEY" ]]; then
+    export F2B_SCRIPT_APIKEY="$F2B_APIKEY"
+    [[ -n "${CONFIG_FILE:-}" ]] && replace_or_add "$CONFIG_FILE" "F2B_APIKEY" "\"\""
+fi
+
+F2B_APIKEY="${F2B_SCRIPT_APIKEY:-}"
 
 [[ "$F2B_ABUSEIPDB" == "true" && -z "$F2B_APIKEY" ]] && error_exit "F2B_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
 
@@ -69,10 +76,21 @@ fail_ipdb() {
     [[ -z "$F2B_NORESTORE" ]] && F2B_NORESTORE="0"
     mkdir -p /var/log/fail2ban
     touch /var/log/fail2ban/abuseipdb.log
+
+    mkdir -p /etc/fail2ban
+    touch "$APIKEY_FILE"
+    chmod 600 "$APIKEY_FILE"
+
+    if grep -q "^export F2B_SCRIPT_APIKEY=" "$APIKEY_FILE"; then
+        sed -i "s|^export F2B_SCRIPT_APIKEY=.*|export F2B_SCRIPT_APIKEY=$(printf '%q' "$F2B_APIKEY")|" "$APIKEY_FILE"
+    else
+        echo "export F2B_SCRIPT_APIKEY=$(printf '%q' "$F2B_APIKEY")" >> "$APIKEY_FILE"
+    fi
+
     cat > /etc/fail2ban/abuseipdb.env <<'EOF'
-SECRETS_FILE="/etc/bastioning/secrets.env"
-[[ -f "$SECRETS_FILE" ]] && source "$SECRETS_FILE"
-    ABUSEIPDB_API_KEY="${F2B_SCRIPT_APIKEY:-}"
+APIKEY_FILE="/etc/fail2ban/apikey.env"
+[[ -f "$APIKEY_FILE" ]] && source "$APIKEY_FILE"
+ABUSEIPDB_API_KEY="${F2B_SCRIPT_APIKEY:-}"
 EOF
 
     if [[ -n "$BASE_DIR" && -f "$BASE_DIR/resources/abuseipdb-check-report.sh" ]]; then

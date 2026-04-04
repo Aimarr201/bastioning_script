@@ -33,8 +33,8 @@ replace_or_add() {
     local key="$2"
     local value="$3"
 
-    grep -q "^$key" "$file" && \
-        sed -i "s|^$key.*|$key=$value|" "$file" || \
+    grep -Eq "^[[:space:]]*${key}" "$file" && \
+        sed -i -E "s|^[[:space:]]*(${key}).*|\1=${value}|" "$file" || \
         echo "$key=$value" >> "$file"
 
     log "Config: $key $value -> $file"

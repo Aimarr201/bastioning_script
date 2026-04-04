@@ -9,10 +9,18 @@
 
 log "Configurando DDNS con Cloudflare..."
 
-SECRETS_FILE="/etc/bastioning/secrets.env"
-[[ -f "$SECRETS_FILE" ]] && source "$SECRETS_FILE"
+DDNS_WORKDIR="/opt/cloudflare-ddns"
+APIKEY_FILE="$DDNS_WORKDIR/apikey.env"
+[[ -f "$APIKEY_FILE" ]] && source "$APIKEY_FILE"
 
 DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-${DDNS_APIKEY:-}}"
+
+if [[ -n "$DDNS_APIKEY" ]]; then
+    export DDNS_SCRIPT_APIKEY="$DDNS_APIKEY"
+    [[ -n "${CONFIG_FILE:-}" ]] && replace_or_add "$CONFIG_FILE" "DDNS_APIKEY" "\"\""
+fi
+
+DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-}"
 
 # Validaciones
 [[ -z "$DDNS_APIKEY" ]] && error_exit "DDNS_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
@@ -20,23 +28,31 @@ DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-${DDNS_APIKEY:-}}"
 [[ -z "$DDNS_DOMAIN" ]] && error_exit "DDNS_DOMAIN no está definido en config.conf"
 [[ -z "$DDNS_CRON" ]] && error_exit "DDNS_CRON no está definido en config.conf"
 
+# persistir la API key en el entorno para ejecuciones desde cron
+mkdir -p "$DDNS_WORKDIR"
+touch "$APIKEY_FILE"
+chmod 600 "$APIKEY_FILE"
+
+if grep -q "^export DDNS_SCRIPT_APIKEY=" "$APIKEY_FILE"; then
+    sed -i "s|^export DDNS_SCRIPT_APIKEY=.*|export DDNS_SCRIPT_APIKEY=$(printf '%q' "$DDNS_APIKEY")|" "$APIKEY_FILE"
+else
+    echo "export DDNS_SCRIPT_APIKEY=$(printf '%q' "$DDNS_APIKEY")" >> "$APIKEY_FILE"
+fi
+
 
 # instalar paquetes
 install_package curl
 install_package jq
 install_package cron
 
-# Crear directorio
-mkdir -p /opt/cloudflare-ddns
-
-SCRIPT_FILE="/opt/cloudflare-ddns/update.sh"
+SCRIPT_FILE="$DDNS_WORKDIR/update.sh"
 
 # Crear script de actualización
 cat > "$SCRIPT_FILE" <<EOF
 #!/bin/bash
 
-SECRETS_FILE="/etc/bastioning/secrets.env"
-[[ -f "\$SECRETS_FILE" ]] && source "\$SECRETS_FILE"
+APIKEY_FILE="/opt/cloudflare-ddns/apikey.env"
+[[ -f "\$APIKEY_FILE" ]] && source "\$APIKEY_FILE"
 
 API_TOKEN="\${DDNS_SCRIPT_APIKEY:-}"
 ZONE_ID="$DDNS_ZONE_ID"

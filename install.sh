@@ -26,45 +26,6 @@ die() {
 source "$CONFIG_FILE"
 source "$UTILS_FILE"
 
-# --- Gestion de secretos en variables de entorno ---
-mkdir -p /etc/bastioning
-touch "$SECRETS_FILE"
-chmod 600 "$SECRETS_FILE"
-
-set_secret_env() {
-    local key_name="$1"
-    local key_value="$2"
-    local escaped_value=""
-
-    escaped_value=$(printf '%q' "$key_value")
-
-    if grep -q "^export ${key_name}=" "$SECRETS_FILE"; then
-        sed -i "s|^export ${key_name}=.*|export ${key_name}=${escaped_value}|" "$SECRETS_FILE"
-    else
-        echo "export ${key_name}=${escaped_value}" >> "$SECRETS_FILE"
-    fi
-}
-
-clear_config_secret() {
-    local key_name="$1"
-    sed -i "s|^[[:space:]]*${key_name}=.*|    ${key_name}=\"\"|" "$CONFIG_FILE"
-}
-
-# Prioriza variables de entorno del sistema y conserva compatibilidad con config en esta ejecucion.
-if [[ -n "${DDNS_APIKEY:-}" ]]; then
-    export DDNS_SCRIPT_APIKEY="$DDNS_APIKEY"
-    set_secret_env "DDNS_SCRIPT_APIKEY" "$DDNS_SCRIPT_APIKEY"
-fi
-
-if [[ -n "${F2B_APIKEY:-}" ]]; then
-    export F2B_SCRIPT_APIKEY="$F2B_APIKEY"
-    set_secret_env "F2B_SCRIPT_APIKEY" "$F2B_SCRIPT_APIKEY"
-fi
-
-# Limpia cualquier API key que se haya dejado en config.conf.
-clear_config_secret "DDNS_APIKEY"
-clear_config_secret "F2B_APIKEY"
-
 # --- Validar permisos ---
 if [[ "$(id -u)" -ne 0 ]]; then
     error_exit "Este script debe ejecutarse como root."
