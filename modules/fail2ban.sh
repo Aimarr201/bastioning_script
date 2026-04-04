@@ -15,27 +15,27 @@ F2B_APIKEY="${F2B_SCRIPT_APIKEY:-${F2B_APIKEY:-}}"
 
 if [[ -n "$F2B_APIKEY" ]]; then
     export F2B_SCRIPT_APIKEY="$F2B_APIKEY"
-    [[ -n "${CONFIG_FILE:-}" ]] && replace_or_add "$CONFIG_FILE" "F2B_APIKEY" "\"\""
+    [[ -n "${CONFIG_FILE:-}" ]] && ft_replace_or_add "$CONFIG_FILE" "F2B_APIKEY" "\"\""
 fi
 
 F2B_APIKEY="${F2B_SCRIPT_APIKEY:-}"
 
-[[ "$F2B_ABUSEIPDB" == "true" && -z "$F2B_APIKEY" ]] && error_exit "F2B_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
+[[ "$F2B_ABUSEIPDB" == "true" && -z "$F2B_APIKEY" ]] && ft_error_exit "F2B_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
 
 # instalar paquetes
-install_package fail2ban
-install_package rsyslog
+ft_install_package fail2ban
+ft_install_package rsyslog
 
 # iniciar y habilitar servicio
-service_start fail2ban
-service_enable fail2ban
+ft_service_start fail2ban
+ft_service_enable fail2ban
 
 # crear el archivo de configuracion local
-backup_file /etc/fail2ban/jail.local
+ft_backup_file /etc/fail2ban/jail.local
 touch /etc/fail2ban/jail.local
 
 # funciones para la configuracion de jail.local
-fail_defaults() {
+ft_fail_defaults() {
     cat > /etc/fail2ban/jail.local <<EOF
 [DEFAULT]
 
@@ -45,18 +45,18 @@ maxretry = $F2B_DEFMAXRETRY
 
 EOF
 
-    log "configuraciones para jaulas default añadida"
+    ft_log "configuraciones para jaulas default añadida"
 }
 
-fail_whitelist() {
+ft_fail_whitelist() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
 
     echo -e "ignoreip = $F2B_WHITELIST\n" >> "/etc/fail2ban/jail.local"
 
-    log "direcciones ip permitidas añadidas a la lista blanca"
+    ft_log "direcciones ip permitidas añadidas a la lista blanca"
 }
 
-fail_increment() {
+ft_fail_increment() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -67,10 +67,10 @@ bantime.factor       = $F2B_FACTOR
 bantime.overalljails = $F2B_OVERALL
 
 EOF
-    log "incremento de tiempo de bloqueo añadido"
+    ft_log "incremento de tiempo de bloqueo añadido"
 }
 
-fail_ipdb() {
+ft_fail_ipdb() {
     local abuse_script_src=""
 
     [[ -z "$F2B_NORESTORE" ]] && F2B_NORESTORE="0"
@@ -98,7 +98,7 @@ EOF
     elif [[ -f "resources/abuseipdb-check-report.sh" ]]; then
         abuse_script_src="resources/abuseipdb-check-report.sh"
     else
-        error_exit "No se encuentra resources/abuseipdb-check-report.sh"
+        ft_error_exit "No se encuentra resources/abuseipdb-check-report.sh"
     fi
 
     cp -r "$abuse_script_src" /usr/local/sbin/abuseipdb-check-report.sh
@@ -106,7 +106,7 @@ EOF
     chmod 755 /var/log/fail2ban/abuseipdb.log
     chmod 755 /usr/local/sbin/abuseipdb-check-report.sh
 
-    install_package curl
+    ft_install_package curl
 
 
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "[DEFAULT]" ] && echo -e "[DEFAULT]\n" > "/etc/fail2ban/jail.local"
@@ -130,13 +130,13 @@ action = %(action_)s
 
 EOF
 
-    replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "actionban " " /usr/local/sbin/abuseipdb-check-report.sh <ip> <name>"
-    replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "norestored " " $F2B_NORESTORE"
+    ft_replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "actionban " " /usr/local/sbin/abuseipdb-check-report.sh <ip> <name>"
+    ft_replace_or_add "/etc/fail2ban/action.d/abuseipdb.conf" "norestored " " $F2B_NORESTORE"
 
-    log "Reportes con AbuseIPDB añadido"
+    ft_log "Reportes con AbuseIPDB añadido"
 }
 
-fail_recidive() {
+ft_fail_recidive() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -148,10 +148,10 @@ findtime = $F2B_RECFINDTIME
 maxretry = $F2B_RECMAXRETRY
 
 EOF
-    log "jaula de reincidentes añadida"
+    ft_log "jaula de reincidentes añadida"
 }
 
-fail_sshd() {
+ft_fail_sshd() {
     if [ "$ENABLE_SSH" == "true" ]; then
         cat >   /etc/fail2ban/filter.d/sshd-publickey.conf <<EOF
 # Filtro para detectar rechazos de publickey SSH
@@ -165,7 +165,7 @@ ignoreregex =
 EOF
         [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
-        [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
+        [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && ft_log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
         cat >> /etc/fail2ban/jail.local <<EOF
 [sshd-publickey]
 
@@ -178,7 +178,7 @@ EOF
     else
         [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
-        [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
+        [[ -z "$SSH_PORT" ]] && SSH_PORT="22" && ft_log "SSH_PORT no está definido en config.conf. Se le asigna el valor por defecto (22)"
         cat >> /etc/fail2ban/jail.local <<EOF
 [sshd]
 
@@ -187,10 +187,10 @@ port     = $SSH_PORT
 
 EOF
     fi
-    log "jaula para sshd añadida"
+    ft_log "jaula para sshd añadida"
 }
 
-fail_nginx() {
+ft_fail_nginx() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -215,10 +215,10 @@ findtime = 10m
 bantime  = 24h
 
 EOF
-    log "jaula para nginx añadida"
+    ft_log "jaula para nginx añadida"
 }
 
-fail_apache() {
+ft_fail_apache() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -231,10 +231,10 @@ logpath  = /var/log/apache2/error.log
 
 
 EOF
-    log "jaula para apache añadida"
+    ft_log "jaula para apache añadida"
 }
 
-fail_ftp() {
+ft_fail_ftp() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -248,10 +248,10 @@ findtime = 10m
 bantime  = 24h
 
 EOF
-    log "jaula para ftp añadida"
+    ft_log "jaula para ftp añadida"
 }
 
-fail_postfix() {
+ft_fail_postfix() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -275,10 +275,10 @@ bantime  = 24h
 
 
 EOF
-    log "jaula para postfix añadida"
+    ft_log "jaula para postfix añadida"
 }
 
-fail_devecot() {
+ft_fail_devecot() {
     [ "$(head -n 1 "/etc/fail2ban/jail.local")" != "" ] && echo -e "" >> "/etc/fail2ban/jail.local"
 
     cat >> /etc/fail2ban/jail.local <<EOF
@@ -292,35 +292,35 @@ findtime = 10m
 bantime  = 1h
 
 EOF
-    log "jaula para devecot añadida"
+    ft_log "jaula para devecot añadida"
 }
 
-fail_logrotate() {
-    install_package wget
+ft_fail_logrotate() {
+    ft_install_package wget
 
-    service_start rsyslog
-    service_enable rsyslog
+    ft_service_start rsyslog
+    ft_service_enable rsyslog
 
     wget -O /etc/logrotate.d/fail2ban https://raw.githubusercontent.com/fail2ban/fail2ban/debian/debian/fail2ban.logrotate
 
-    log "rotacion de logs añadida"
+    ft_log "rotacion de logs añadida"
 }
 
 
-[[ "$F2B_DEFAULT" == "true" ]] && fail_defaults
-[[ -n "$F2B_WHITELIST" ]] && fail_whitelist
-[[ "$F2B_BANTIMEINCREMENT" == "true" ]] && fail_increment
-[[ "$F2B_ABUSEIPDB" == "true" ]] && fail_ipdb
-[[ "$F2B_RECIDIVE" == "true" ]] && fail_recidive
-[[ "$F2B_SSHD" == "true" ]] && fail_sshd
-[[ "$F2B_NGINX" == "true" ]] && fail_nginx
-[[ "$F2B_APACHE" == "true" ]] && fail_apache
-[[ "$F2B_FTP" == "true" ]] && fail_ftp
-[[ "$F2B_POSTFIX" == "true" ]] && fail_postfix
-[[ "$F2B_DOVECOT" == "true" ]] && fail_devecot
-[[ "$F2B_LOGROTATE" == "true" ]] && fail_logrotate
+[[ "$F2B_DEFAULT" == "true" ]] && ft_fail_defaults
+[[ -n "$F2B_WHITELIST" ]] && ft_fail_whitelist
+[[ "$F2B_BANTIMEINCREMENT" == "true" ]] && ft_fail_increment
+[[ "$F2B_ABUSEIPDB" == "true" ]] && ft_fail_ipdb
+[[ "$F2B_RECIDIVE" == "true" ]] && ft_fail_recidive
+[[ "$F2B_SSHD" == "true" ]] && ft_fail_sshd
+[[ "$F2B_NGINX" == "true" ]] && ft_fail_nginx
+[[ "$F2B_APACHE" == "true" ]] && ft_fail_apache
+[[ "$F2B_FTP" == "true" ]] && ft_fail_ftp
+[[ "$F2B_POSTFIX" == "true" ]] && ft_fail_postfix
+[[ "$F2B_DOVECOT" == "true" ]] && ft_fail_devecot
+[[ "$F2B_LOGROTATE" == "true" ]] && ft_fail_logrotate
 
 
 # reiniciar servicio fail2ban
-[[ "$F2B_LOGROTATE" == "true" ]] && service_restart rsyslog
-service_restart fail2ban
+[[ "$F2B_LOGROTATE" == "true" ]] && ft_service_restart rsyslog
+ft_service_restart fail2ban

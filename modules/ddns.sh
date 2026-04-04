@@ -7,7 +7,7 @@
 #################################################
 
 
-log "Configurando DDNS con Cloudflare..."
+ft_log "Configurando DDNS con Cloudflare..."
 
 DDNS_WORKDIR="/opt/cloudflare-ddns"
 APIKEY_FILE="$DDNS_WORKDIR/apikey.env"
@@ -17,16 +17,16 @@ DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-${DDNS_APIKEY:-}}"
 
 if [[ -n "$DDNS_APIKEY" ]]; then
     export DDNS_SCRIPT_APIKEY="$DDNS_APIKEY"
-    [[ -n "${CONFIG_FILE:-}" ]] && replace_or_add "$CONFIG_FILE" "DDNS_APIKEY" "\"\""
+    [[ -n "${CONFIG_FILE:-}" ]] && ft_replace_or_add "$CONFIG_FILE" "DDNS_APIKEY" "\"\""
 fi
 
 DDNS_APIKEY="${DDNS_SCRIPT_APIKEY:-}"
 
 # Validaciones
-[[ -z "$DDNS_APIKEY" ]] && error_exit "DDNS_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
-[[ -z "$DDNS_ZONE_ID" ]] && error_exit "DDNS_ZONE_ID no está definido en config.conf"
-[[ -z "$DDNS_DOMAIN" ]] && error_exit "DDNS_DOMAIN no está definido en config.conf"
-[[ -z "$DDNS_CRON" ]] && error_exit "DDNS_CRON no está definido en config.conf"
+[[ -z "$DDNS_APIKEY" ]] && ft_error_exit "DDNS_APIKEY no está definido. Escríbelo en config.conf para exportarlo y borrarlo automáticamente"
+[[ -z "$DDNS_ZONE_ID" ]] && ft_error_exit "DDNS_ZONE_ID no está definido en config.conf"
+[[ -z "$DDNS_DOMAIN" ]] && ft_error_exit "DDNS_DOMAIN no está definido en config.conf"
+[[ -z "$DDNS_CRON" ]] && ft_error_exit "DDNS_CRON no está definido en config.conf"
 
 # persistir la API key en el entorno para ejecuciones desde cron
 mkdir -p "$DDNS_WORKDIR"
@@ -41,9 +41,9 @@ fi
 
 
 # instalar paquetes
-install_package curl
-install_package jq
-install_package cron
+ft_install_package curl
+ft_install_package jq
+ft_install_package cron
 
 SCRIPT_FILE="$DDNS_WORKDIR/update.sh"
 
@@ -110,6 +110,6 @@ EOF
 chmod +x "$SCRIPT_FILE"
 
 # Añadir al cron (sin duplicar)
-add_cronjob "$DDNS_CRON /bin/bash $SCRIPT_FILE"
+ft_add_cronjob "$DDNS_CRON /bin/bash $SCRIPT_FILE"
 
-log "DDNS con Cloudflare configurado correctamente"
+ft_log "DDNS con Cloudflare configurado correctamente"

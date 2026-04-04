@@ -7,31 +7,31 @@
 #################################################
 
 
-log "Configurando SSH..."
+ft_log "Configurando SSH..."
 
 # validaciones
-[[ -z "$SSH_USERNAME" ]] && error_exit "SSH_USERNAME no está definido en config.conf"
-[[ -z "$SSH_PORT" ]] && error_exit "SSH_PORT no está definido en config.conf"
-[[ -z "$SSH_PUBLICKEY" ]] && error_exit "SSH_PUBLICKEY no está definido en config.conf"
+[[ -z "$SSH_USERNAME" ]] && ft_error_exit "SSH_USERNAME no está definido en config.conf"
+[[ -z "$SSH_PORT" ]] && ft_error_exit "SSH_PORT no está definido en config.conf"
+[[ -z "$SSH_PUBLICKEY" ]] && ft_error_exit "SSH_PUBLICKEY no está definido en config.conf"
 
 # comprobar que existe el usuario
-id "$SSH_USERNAME" >/dev/null 2>&1 || error_exit "El usuario $SSH_USERNAME no existe"
+id "$SSH_USERNAME" >/dev/null 2>&1 || ft_error_exit "El usuario $SSH_USERNAME no existe"
 
 # obtener el nombre de usuario
 SSH_HOME="$(getent passwd "$SSH_USERNAME" | cut -d: -f6)"
-[[ -z "$SSH_HOME" ]] && error_exit "No se ha podido obtener el home del usuario $SSH_USERNAME"
+[[ -z "$SSH_HOME" ]] && ft_error_exit "No se ha podido obtener el home del usuario $SSH_USERNAME"
 
 # instalar paquetes
-install_package ssh
-install_package libpam-google-authenticator
+ft_install_package ssh
+ft_install_package libpam-google-authenticator
 
 # iniciar y habilitar servicios
-service_start ssh
-service_enable ssh
+ft_service_start ssh
+ft_service_enable ssh
 
 # backups de los archivos de configuracion
-backup_file /etc/pam.d/sshd
-backup_file /etc/ssh/sshd_config
+ft_backup_file /etc/pam.d/sshd
+ft_backup_file /etc/ssh/sshd_config
 
 # lanzar configuracion de google-authenticator como usuario
 runuser -u "$SSH_USERNAME" -- google-authenticator -t -C -f -q -e 5 -Q NONE -d -w 3 -r 3 -R 30
@@ -205,6 +205,6 @@ echo "Scratch codes: $(tail -n 6 "$SSH_HOME/.google_authenticator")" >> "$SSH_HO
 chown "$SSH_USERNAME:$SSH_USERNAME" "$SSH_HOME/mfa"
 
 # reiniciar el servicio ssh para aplicar los cambios
-service_restart ssh
+ft_service_restart ssh
 
-log "Servicio ssh configurado correctamente"
+ft_log "Servicio ssh configurado correctamente"

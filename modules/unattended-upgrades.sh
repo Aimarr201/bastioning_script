@@ -7,20 +7,20 @@
 #################################################
 
 
-log "Configurando unattended-upgrades"
+ft_log "Configurando unattended-upgrades"
 
 # validaciones
-[[ -z "$UNATT_ENABLE" ]] && error_exit "UNATT_ENABLE no está definido en config.conf"
-[[ -z "$UNATT_UPDATEDAYS" ]] && error_exit "UNATT_UPDATEDAYS no está definido en config.conf"
-[[ -z "$UNATT_DOWNLOADDAYS" ]] && error_exit "UNATT_DOWNLOADDAYS no está definido en config.conf"
-[[ -z "$UNATT_AUTOCLEAN" ]] && error_exit "UNATT_AUTOCLEAN no está definido en config.conf"
-[[ -z "$UNATT_AUTOUPGRADE" ]] && error_exit "UNATT_AUTOUPGRADE no está definido en config.conf"
-[[ -z "$UNATT_DPKG" ]] && error_exit "UNATT_DPKG no está definido en config.conf"
-[[ -z "$UNATT_INSTALLONSHUTDOWN" ]] && error_exit "UNATT_INSTALLONSHUTDOWN no está definido en config.conf"
-[[ -z "$UNATT_REMOVEUNUSED" ]] && error_exit "UNATT_REMOVEUNUSED no está definido en config.conf"
-[[ -z "$UNATT_REMOVENEWUNUSED" ]] && error_exit "UNATT_REMOVENEWUNUSED no está definido en config.conf"
-[[ -z "$UNATT_REBOOT" ]] && error_exit "UNATT_REBOOT no está definido en config.conf"
-[[ -z "$UNATT_REBOOTWITHUSERS" ]] && error_exit "UNATT_REBOOTWITHUSERS no está definido en config.conf"
+[[ -z "$UNATT_ENABLE" ]] && ft_error_exit "UNATT_ENABLE no está definido en config.conf"
+[[ -z "$UNATT_UPDATEDAYS" ]] && ft_error_exit "UNATT_UPDATEDAYS no está definido en config.conf"
+[[ -z "$UNATT_DOWNLOADDAYS" ]] && ft_error_exit "UNATT_DOWNLOADDAYS no está definido en config.conf"
+[[ -z "$UNATT_AUTOCLEAN" ]] && ft_error_exit "UNATT_AUTOCLEAN no está definido en config.conf"
+[[ -z "$UNATT_AUTOUPGRADE" ]] && ft_error_exit "UNATT_AUTOUPGRADE no está definido en config.conf"
+[[ -z "$UNATT_DPKG" ]] && ft_error_exit "UNATT_DPKG no está definido en config.conf"
+[[ -z "$UNATT_INSTALLONSHUTDOWN" ]] && ft_error_exit "UNATT_INSTALLONSHUTDOWN no está definido en config.conf"
+[[ -z "$UNATT_REMOVEUNUSED" ]] && ft_error_exit "UNATT_REMOVEUNUSED no está definido en config.conf"
+[[ -z "$UNATT_REMOVENEWUNUSED" ]] && ft_error_exit "UNATT_REMOVENEWUNUSED no está definido en config.conf"
+[[ -z "$UNATT_REBOOT" ]] && ft_error_exit "UNATT_REBOOT no está definido en config.conf"
+[[ -z "$UNATT_REBOOTWITHUSERS" ]] && ft_error_exit "UNATT_REBOOTWITHUSERS no está definido en config.conf"
 
 # definir rutas
 SOURCES_LIST="/etc/apt/sources.list"
@@ -37,11 +37,11 @@ if [[ "$UNATT_SOURCES" == "true" ]]; then
 fi
 
 # instalar paquetes
-install_package "unattended-upgrades"
-install_package "apt-listchanges"
+ft_install_package "unattended-upgrades"
+ft_install_package "apt-listchanges"
 
 # crear archivo de configuración
-backup_file "/etc/apt/apt.conf.d/51myunattended-upgrades"
+ft_backup_file "/etc/apt/apt.conf.d/51myunattended-upgrades"
 cat > /etc/apt/apt.conf.d/51myunattended-upgrades <<EOF
 
 // Activa el sistema de actualizaciones automáticas periódicas.
@@ -109,12 +109,12 @@ EOF
 if ! unattended-upgrade -d --dry-run; then
     LOG_FILE="/var/log/unattended-upgrades/unattended-upgrades.log"
     if [[ -f "$LOG_FILE" ]]; then
-        log "Últimas líneas del log de unattended-upgrades tras error:"
+        ft_log "Últimas líneas del log de unattended-upgrades tras error:"
         while IFS= read -r line; do
-            log "$line"
+            ft_log "$line"
         done < <(tail -n 40 "$LOG_FILE")
     fi
-    error_exit "Error en la comprobación de unattended-upgrades (dry-run)"
+    ft_error_exit "Error en la comprobación de unattended-upgrades (dry-run)"
 fi
 
-log "unattended-upgrades configurado correctamente"
+ft_log "unattended-upgrades configurado correctamente"
